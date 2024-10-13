@@ -2,9 +2,14 @@
 #define WEBSERVER_H
 
 typedef struct header {
-  char method[10];
-  char path[10];
-  char version[10];
+  char method[16];
+  char path[256];
+  char version[16];
+  char host[256];
 } HttpHeader;
+
+void initHttpHeader(HttpHeader *header);
+void parseRequest(const char *request, HttpHeader *header);
+
 
 #endif

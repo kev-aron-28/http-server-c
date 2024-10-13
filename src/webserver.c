@@ -60,6 +60,7 @@ int main(int argc, char const *argv[])
     if (clientDescriptor < 0)
     {
       perror("FAILED TO ACCEPT REQUEST \n");
+
       continue; // Don't exit, just continue accepting new connections
     }
 
@@ -72,18 +73,59 @@ int main(int argc, char const *argv[])
 
       break;
     }
-    // TODO: BREAKDOWN HTTP HEADER 
-    printf("%s \n", buffer);
 
     HttpHeader header;
 
-    printf("CLIENT CONNECTED: %s:%d\n", inet_ntoa(clientAddress.sin_addr), ntohs(clientAddress.sin_port));
+    initHttpHeader(&header);
 
-    // Handle client here
+    parseRequest(buffer, &header);
 
-    close(clientDescriptor); // Close the client socket after handling
+    printf("Method: %s\n", header.method);
+    printf("Path: %s\n", header.path);
+    printf("Version: %s\n", header.version);
+    printf("Host: %s\n", header.host);
+
+    if(strcmp(header.method, "GET") == 0) {
+      const char *response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: 48\r\n"
+        "\r\n"
+        "<html><body><h1>Hello, World!</h1></body></html>";
+
+      send(clientDescriptor, response, strlen(response), 0);
+    }
+
+    close(clientDescriptor);
   }
 
-  close(socketDescriptor); // Close the server socket
+  close(socketDescriptor);
   return 0;
+}
+
+
+void parseRequest(const char * request, HttpHeader *header) {
+  char *requestLine = strtok(strdup(request), "\r\n");
+
+  sscanf(requestLine, "%s %s %s", header->method, header->path, header->version);
+
+  char *line;
+
+  while((line = strtok(NULL, "\r\n")) != NULL) {
+    if(strncmp(line, "Host:", 5) == 0) {
+      sscanf(line, "Host: %s", header->host);
+    }
+  }
+}
+
+
+
+void initHttpHeader(HttpHeader *header) {
+  memset(header->method, 0, sizeof(header->method));
+
+  memset(header->path, 0, sizeof(header->path));
+  
+  memset(header->version, 0, sizeof(header->version));
+  
+  memset(header->host, 0, sizeof(header->host));
 }
