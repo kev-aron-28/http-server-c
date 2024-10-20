@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude
+CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR)
 
 # Directories
 SRC_DIR = src
@@ -11,10 +11,10 @@ BIN_DIR = bin
 TARGET = $(BIN_DIR)/webserver
 
 # Source and header files
-SRCS = $(SRC_DIR)/webserver.c
+SRCS = $(SRC_DIR)/webserver.c $(SRC_DIR)/main.c
 HDRS = $(INCLUDE_DIR)/webserver.h
 
-# Default target: create the executable directly
+# Default target: create the executable
 all: $(TARGET)
 
 # Compile and link the webserver
