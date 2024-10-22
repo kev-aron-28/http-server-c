@@ -23,11 +23,20 @@ typedef struct routesTable {
   int routesCounter;
 } RoutesTable;
 
+typedef struct {
+  RoutesTable table;
+  char publicRoute[250];
+  int port;
+} HttpServerInstance;
+
+HttpServerInstance getInstance(int port);
+void initRoutesTable(HttpServerInstance * serverInstance);
 
 void initHttpHeader(HttpHeader *header);
 void parseRequest(const char *request, HttpHeader *header);
-void handleRequest(int clientFD, const HttpHeader *header, RoutesTable table);
-void httpGET(RoutesTable *table, const char *path, RouteHandler handler);
-int startHttpServer(int port, RoutesTable table);
+void handleRequest(int clientFD, const HttpHeader *header, HttpServerInstance serverInstance);
+int startHttpServer(HttpServerInstance instance);
+
+void httpGET(HttpServerInstance *server, const char *path, RouteHandler handler);
 
 #endif

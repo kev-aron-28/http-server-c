@@ -9,11 +9,11 @@ void helloController(int clientFD, const HttpHeader * request);
 
 int main(int argc, char const *argv[])
 {
-  RoutesTable routes = { .routesCounter = 0 };
-  
-  httpGET(&routes, "/hello", helloController);
+  HttpServerInstance server = getInstance(3000);
 
-  startHttpServer(3000, routes);
+  httpGET(&server, "/hello", helloController);
+
+  startHttpServer(server);
 
   return 0;
 }

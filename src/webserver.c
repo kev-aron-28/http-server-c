@@ -11,7 +11,7 @@
 #define PORT 3000
 #define QUEUE_LEN 5 // Define a backlog length for pending connections
 
-int startHttpServer(int port, RoutesTable table)
+int startHttpServer(HttpServerInstance instance)
 {
   int socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
   if (socketDescriptor < 0)
@@ -23,7 +23,7 @@ int startHttpServer(int port, RoutesTable table)
   struct sockaddr_in serverAddress;
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_addr.s_addr = INADDR_ANY;
-  serverAddress.sin_port = htons(port);
+  serverAddress.sin_port = htons(instance.port);
 
   if (bind(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
   {
@@ -39,7 +39,7 @@ int startHttpServer(int port, RoutesTable table)
     return -1;
   }
 
-  printf("Server listening on port %d\n", port);
+  printf("Server listening on port %d\n", instance.port);
 
   while (1)
   {
@@ -65,7 +65,7 @@ int startHttpServer(int port, RoutesTable table)
     initHttpHeader(&header);
     parseRequest(buffer, &header);
 
-    handleRequest(clientDescriptor, &header, table); // Ensure handleRequest is defined
+    handleRequest(clientDescriptor, &header, instance); // Ensure handleRequest is defined
 
     close(clientDescriptor);
   }
@@ -74,11 +74,11 @@ int startHttpServer(int port, RoutesTable table)
   return 0;                // This return statement will only be reached if you break out of the while loop
 }
 
-void handleRequest(int clientFD, const HttpHeader *request, RoutesTable table)
+void handleRequest(int clientFD, const HttpHeader *request, HttpServerInstance serverInstance)
 {
-  for (int i = 0; i < table.routesCounter; i++)
+  for (int i = 0; i < serverInstance.table.routesCounter; i++)
   {
-    Route currentRoute = table.routes[i];
+    Route currentRoute = serverInstance.table.routes[i];
     if (strcmp(currentRoute.method, request->method) == 0 && strcmp(currentRoute.path, request->path) == 0)
     {
       currentRoute.handler(clientFD, request);
@@ -89,15 +89,15 @@ void handleRequest(int clientFD, const HttpHeader *request, RoutesTable table)
 }
 
 // HTTP METHODS
-void httpGET(struct routesTable *table, const char *path, RouteHandler handler)
+void httpGET(HttpServerInstance *instance, const char *path, RouteHandler handler)
 {
-  strcpy(table->routes[table->routesCounter].method, "GET");
+  strcpy(instance->table.routes[instance->table.routesCounter].method, "GET");
 
-  strcpy(table->routes[table->routesCounter].path, path);
+  strcpy(instance->table.routes[instance->table.routesCounter].path, path);
 
-  table->routes[table->routesCounter].handler = handler;
+  instance->table.routes[instance->table.routesCounter].handler = handler;
 
-  table->routesCounter++;
+  instance->table.routesCounter++;
 
   return;
 }
@@ -128,4 +128,27 @@ void initHttpHeader(HttpHeader *header)
   memset(header->version, 0, sizeof(header->version));
 
   memset(header->host, 0, sizeof(header->host));
+}
+
+HttpServerInstance getInstance(int port)
+{
+  HttpServerInstance instance;
+
+  instance.port = port;
+
+  strcpy(instance.publicRoute, "./public");
+
+  initRoutesTable(&instance);
+
+  return instance;
+}
+
+void initRoutesTable(HttpServerInstance *serverInstance)
+{
+  if (serverInstance == NULL)
+  {
+    return;
+  }
+
+  serverInstance->table.routesCounter = 0;
 }
